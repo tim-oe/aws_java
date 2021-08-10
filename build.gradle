@@ -1,0 +1,151 @@
+// https://github.com/john-tipper/git-semantic-versioning
+plugins {
+    id 'java'
+    id 'org.flywaydb.flyway' version '7.12.1'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'org.springframework.boot' version '2.5.3'
+    id 'io.freefair.lombok' version '6.1.0-m3'
+    id "com.avast.gradle.docker-compose" version "0.14.9"
+    id "io.wusa.semver-git-plugin" version "2.3.7"
+    id 'jacoco'
+}
+
+group = 'org.tec.aws'
+project.version = semver.info
+
+java {
+    sourceCompatibility = 1.14
+    targetCompatibility = 1.14
+}
+
+/**
+ * mariadb container
+ * https://github.com/avast/gradle-docker-compose-plugin
+ * see nested config
+ */
+dockerCompose {
+    mariadb {
+        useComposeFiles = ['docker/mariadb-docker-compose.yml']
+    }
+    ls {
+        useComposeFiles = ['docker/localstack-docker-compose.yml']
+    }
+//    sonar {
+//        useComposeFiles = ['sonar-docker-compose.yml']
+//    }
+}
+
+flyway {
+    url = "jdbc:mariadb://${db_host}:${db_port}/"
+    user = "${db_username}"
+    password = "${db_password}"
+    schemas = ["test"]
+    locations = ["filesystem:$rootProject.projectDir/src/main/sql/releases"]
+    placeholderReplacement = false
+}
+
+/**
+ * task to drop and reload the DB
+ * https://docs.gradle.org/current/userguide/tutorial_using_tasks.html
+ * https://discuss.gradle.org/t/how-to-set-up-the-sql-statement-when-calling-ant-sql-task/5743
+ * need to quote the name to leverage dot notation
+ */
+task dbReset {
+    group = 'db'
+    description 'task to drop and reload the DB'
+    dependsOn flywayClean,flywayMigrate
+
+    doLast {
+        ant.echo("sql url:" + "jdbc:mariadb://${db_host}:${db_port}/test")
+        ant.echo("project.gradle.gradleUserHomeDir:" + "$project.gradle.gradleUserHomeDir")
+        ant.echo("rootProject.projectDir:" + "$rootProject.projectDir")
+        ant.echo("url:" + "jdbc:mariadb://${db_host}:${db_port}/test")
+
+        ant.sql(classpath: configurations.db.asPath,
+                driver: 'org.mariadb.jdbc.Driver',
+                url: "jdbc:mariadb://${db_host}:${db_port}/test",
+                userid: "${db_username}",
+                password: "${db_password}",
+                delimiter: ';;',
+                delimitertype: 'normal'
+        ) {
+            transaction(src: "$rootProject.projectDir/src/main/sql/data/users.sql")
+        }
+    }
+}
+
+bootJar {
+    mainClassName = 'org.tec.aws.App'
+
+    manifest {
+        attributes(
+                'Built-By'       : System.properties['user.name'],
+                'Build-Timestamp': new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                'Build-Revision' : semver.info,
+                'Build-Hash'     : semver.info.commit,
+                'Created-By'     : "Gradle ${gradle.gradleVersion}",
+                'Build-Jdk'      : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Build-OS'       : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+        )
+    }
+}
+
+test {
+    useJUnitPlatform{
+        excludeTags 'skip'
+    }
+
+    testLogging.showStandardStreams = true
+    testLogging.showStackTraces = true
+
+    // Always run tests, even when nothing changed.
+    dependsOn 'cleanTest'
+
+    // Show test results.
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
+
+test.finalizedBy jacocoTestReport
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url 'https://plugins.gradle.org/m2/'
+    }
+}
+
+configurations {
+    db
+}
+
+dependencies {
+    //spring
+    implementation 'org.springframework.boot:spring-boot-starter:2.5.3'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.5.3'
+
+    //mariadb
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+    //to get ant.sql working
+    db 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+
+    //aws
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.9.0'
+
+    // lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test:2.5.3') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}

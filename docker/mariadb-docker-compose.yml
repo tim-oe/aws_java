@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  db:
+    image: mariadb:10.5
+    volumes:
+      - ./data/mariadb/:/var/lib/mariadb/
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent", "--password=root"]
+      interval: 1m30s
+      timeout: 60s
+      retries: 6
