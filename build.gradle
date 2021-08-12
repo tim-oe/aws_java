@@ -1,6 +1,7 @@
 // https://github.com/john-tipper/git-semantic-versioning
 plugins {
     id 'java'
+    id 'java-library'
     id 'org.flywaydb.flyway' version '7.12.1'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'org.springframework.boot' version '2.5.3'
@@ -43,6 +44,27 @@ flyway {
     locations = ["filesystem:$rootProject.projectDir/src/main/sql/releases"]
     placeholderReplacement = false
 }
+
+// serverless dep
+// Task for building the zip file for upload
+task buildZip(type: Zip) {
+    // Using the Zip API from gradle to build a zip file of all the dependencies
+    //
+    // The path to this zip file can be set in the serverless.yml file for the
+    // package/artifact setting for deployment to the S3 bucket
+    //
+    // Link: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+
+    // set the base name of the zip file
+    archiveBaseName = "hello"
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+build.dependsOn buildZip
 
 /**
  * task to drop and reload the DB
@@ -140,10 +162,16 @@ dependencies {
     //aws
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
     implementation 'com.amazonaws:aws-lambda-java-events:3.9.0'
+    implementation 'com.amazonaws:aws-lambda-java-log4j2:1.2.0'
 
     // lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
+
+    //jackson
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test:2.5.3') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'

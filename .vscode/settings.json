@@ -28,5 +28,6 @@
         "!Split",
         "!Split sequence"
     ],
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.gradle.home": "/opt/gradle"
 }
