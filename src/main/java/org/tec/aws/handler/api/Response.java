@@ -1,4 +1,4 @@
-package com.serverless;
+package org.tec.aws.handler.api;
 
 import java.util.Map;
 
