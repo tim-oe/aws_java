@@ -96,8 +96,8 @@ task dbReset {
     }
 }
 
-bootJar {
-    mainClassName = 'org.tec.aws.App'
+springBoot {
+    mainClass.set('org.tec.aws.App')
 
     manifest {
         attributes(
@@ -139,7 +139,6 @@ test.finalizedBy jacocoTestReport
 
 repositories {
     mavenCentral()
-    jcenter()
     maven {
         url 'https://plugins.gradle.org/m2/'
     }
@@ -159,10 +158,15 @@ dependencies {
     //to get ant.sql working
     db 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
 
-    //aws
+    //lambda
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
     implementation 'com.amazonaws:aws-lambda-java-events:3.9.0'
     implementation 'com.amazonaws:aws-lambda-java-log4j2:1.2.0'
+
+    //aws
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.45'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.45'
+    implementation 'com.amazonaws:aws-java-sdk-secretsmanager:1.12.45'
 
     // lombok
     compileOnly 'org.projectlombok:lombok'
@@ -172,6 +176,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
+    implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.12.4'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.4'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.4'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test:2.5.3') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'

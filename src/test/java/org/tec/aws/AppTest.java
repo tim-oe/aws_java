@@ -3,6 +3,7 @@
  */
 package org.tec.aws;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,9 +17,13 @@ class AppTest {
 
     @Autowired
     App app;
-   
+
+    @Autowired
+    ObjectMapper objectMapper;
+
     @Test
     void testConfig() {
         Assertions.assertNotNull(app);
+        Assertions.assertNotNull(objectMapper);
     }
 }
