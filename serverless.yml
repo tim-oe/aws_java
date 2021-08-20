@@ -23,12 +23,15 @@ frameworkVersion: '2'
 provider:
   name: aws
   runtime: java8
+  # https://www.serverless.com/blog/serverless-v1.2.0
+  environment:
+    NODE_ENV: ${opt:stage, 'local'}
+  stage: ${opt:stage, 'local'}
+  logRetentionInDays: 14
+  region: us-west-2
+
   lambdaHashingVersion: 20201221
-
-# you can overwrite defaults here
-#  stage: dev
-#  region: us-east-1
-
+# TODO define handler
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
@@ -55,7 +58,9 @@ package:
 
 functions:
   hello:
-    handler: com.serverless.Handler
+    handler: org.tec.aws.handler.api.Handler
+
+
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details

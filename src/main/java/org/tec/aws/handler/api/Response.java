@@ -1,22 +1,22 @@
 package org.tec.aws.handler.api;
 
-import java.util.Map;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import lombok.Getter;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
+@Getter
 public class Response {
 
 	private final String message;
-	private final Map<String, Object> input;
+	private final APIGatewayV2HTTPEvent event;
 
-	public Response(String message, Map<String, Object> input) {
+	public Response(String message, APIGatewayV2HTTPEvent event) {
 		this.message = message;
-		this.input = input;
+		this.event = event;
 	}
 
-	public String getMessage() {
-		return this.message;
-	}
-
-	public Map<String, Object> getInput() {
-		return this.input;
+	@Override
+	public String toString() {
+		return ReflectionToStringBuilder.toString(this);
 	}
 }
